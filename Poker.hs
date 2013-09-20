@@ -3,7 +3,6 @@ import Control.Monad
 import qualified Data.Map as Map
 import qualified Data.List as List
 
-
 --- Data Types
 newtype Rank = Rank { getRank :: Int } deriving (Show, Ord, Eq)
 
@@ -27,44 +26,55 @@ instance Monad Try where
   (Failure s) >>= f = Failure s
   return a = Success a;
 
-class Valuable a where
-  toInt :: a -> Int
-
 instance Eq Card where
   (==) (Card s1 r1) (Card s2 r2) = (==) r1 r2
 
 instance Ord Card where
-  compare (Card s1 r1) (Card s2 r2) = compare s1 s2
+  compare (Card s1 r1) (Card s2 r2) = compare r1 r2
 
 
---- instance Ord HandValue where
----   compare (StraightFlush c1) (StraightFlush c2) = compare c1 c2
----   compare (Quads r1 c1) (Quads r2 c2) = let qRankCmpr = compare r1 r2
----                                         in case qRankCmpr of
----                                           EQ -> compare c1 c2
----                                           otherwise -> qRankCmpr
----   compare (FullHouse r11 r12 c1) (FullHouse r21 r22 c2) = let rankCmpr1 = compare r11 r12
----                                                               rankCmpr2 = compare r21 r22
----                                                           in case (rankCmpr1, rankCmpr2)
----                                                                (EQ, EQ) -> compare c1 c2
----                                                                (EQ, i) -> i
----                                                                (j, _) -> j
----
---- otherwise
---- compare h1 h2 = compare (toInt h1) (toInt h2)
+instance Eq HandType where
+  (StraightFlush r1) == (StraightFlush r2) = (==) r1 r2
+  (Quads r1 (rh1:[])) ==  (Quads r2 (rh2:[])) = (==) r1 r2
+  (FullHouse r11 r12) == (FullHouse r21 r22) = ((==) r11 r21) && ((==) r21 r22)
+  (Flush rs1) == (Flush rs2) = rs1 == rs2
+  (Straight r1) == (Straight r2) = r1 == r2
+  (Trips r1 rs1) == (Trips r2 rs2) = (r1 == r2) && (rs1 == rs2)
+  (TwoPair p11 p12 rs1) == (TwoPair p21 p22 rs2) = (p11 == p21) && (p12 == p22) && (rs1 == rs2)
+  (Pair p1 rs1) == (Pair p2 rs2) = (p1 == p2) && (rs1 == rs2)
+  (NoPair rs1) == (NoPair rs2) = rs1 == rs2
+  _ == _ = False
 
+--- Requires that the lists are in descending sorted order
+instance Ord HandType where
+  compare (StraightFlush r1) (StraightFlush r2) = compare r1 r2
+  compare (Quads r1 (rh1:[])) (Quads r2 (rh2:[])) = (compare r1 r2) `ifEqThen` (compare rh1 rh2)
+  compare (FullHouse r11 r12) (FullHouse r21 r22) = (compare r11 r21) `ifEqThen` (compare r12 r22)
+  compare (Flush rs1) (Flush rs2) = (compare rs1 rs2)
+  compare (Straight r1)  (Straight r2) = (compare r1 r2)
+  compare (Trips r1 rs1) (Trips r2 rs2) = (compare r1 r2) `ifEqThen` (compare rs1 rs2)
+  compare (TwoPair p11 p12 rs1) (TwoPair p21 p22 rs2) =  (compare p11 p21) `ifEqThen` (compare p12 p22) `ifEqThen` (compare rs1 rs2)
+  compare (Pair p1 rs1) (Pair p2 rs2) = (compare p1 p2) `ifEqThen` (compare rs1 rs2)
+  compare (NoPair rs1) (NoPair rs2) = compare rs1 rs2
+  compare h1 h2 = compare (value h1) (value h2)
 
+ifEqThen :: Ordering -> Ordering -> Ordering
+ifEqThen EQ y = y
+ifEqThen x _ = x
+
+class Valuable a where
+  value :: a -> Int
 
 instance Valuable HandType where
-  toInt (StraightFlush _) = 9
-  toInt (Quads _ _) = 8
-  toInt (FullHouse _ _) = 7
-  toInt (Flush _) = 6
-  toInt (Straight _) = 5
-  toInt (Trips _ _) = 4
-  toInt (TwoPair _ _ _) = 3
-  toInt (Pair _ _) = 2
-  toInt ht = 1 -- NoPair
+  value (StraightFlush _) = 9
+  value (Quads _ _) = 8
+  value (FullHouse _ _) = 7
+  value (Flush _) = 6
+  value (Straight _) = 5
+  value (Trips _ _) = 4
+  value (TwoPair _ _ _) = 3
+  value (Pair _ _) = 2
+  value ht = 1 -- NoPair
 
 
 --- Creation Functions
@@ -118,10 +128,10 @@ cardList :: Hand -> [Card]
 cardList (Hand c1 c2 c3 c4 c5) = [c1, c2, c3, c4, c5]
 
 rankList :: Hand -> [Rank]
-rankList h = map (\c -> case c of; Card _ r -> r) (cardList h)
+rankList h = map (\c -> case c of Card _ r -> r) (cardList h)
 
 suitList :: Hand -> [Suit]
-suitList h = map (\c -> case c of; Card s _ -> s) (cardList h)
+suitList h = map (\c -> case c of Card s _ -> s) (cardList h)
 
 incrementHistogram :: (Ord a) => a -> (Map.Map a Int) -> (Map.Map a Int)
 incrementHistogram k m = case Map.lookup k m of
@@ -141,17 +151,16 @@ getSuitHistogram h = populateHistogram $ suitList h
 invertedRankHistogram :: Hand -> (Map.Map Int [Rank])
 invertedRankHistogram h = Map.foldWithKey collectRankByCount (Map.empty) (getRankHistogram h)
 ---collectRankByCount :: Rank -> Int -> (Map.Map Int [Rank]) -> (Map.Map Int [Rank])
-where collectRankByCount r count m = case (Map.lookup count m) of
+collectRankByCount :: Rank -> Int -> (Map.Map Int [Rank]) -> (Map.Map Int [Rank])
+collectRankByCount r count m = case (Map.lookup count m) of
       Just rs -> Map.insert count (r:rs) m
       Nothing -> Map.insert count [r] m
-
 
 isFlush :: Hand -> Bool
 isFlush h = (Map.size (getSuitHistogram h)) == 1
 
 isStraight :: Hand -> Bool
 isStraight h = all (\((Rank i), (Rank j)) -> i + 1 == j) (selfZip (List.sort (rankList h)))
-
 
 selfZip :: [a] -> [(a,a)]
 selfZip as = zip as (tail as)
@@ -178,11 +187,11 @@ getHandType h = case (flush, straight, quads, trips, pairs, singles) of
 
 
 
+
+
 --- Main
 main :: IO ()
 main = forever $ do
   putStrLn "Input Hand: e.g. C1 C2 H3 C4 D5"
   line <- getLine
   putStrLn (show (fmap getHandType (parseHand line)))
-
-
