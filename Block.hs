@@ -1,3 +1,4 @@
+import qualified Data.Map as Map
 
 --- Solves the following problem using a dynamic programming solution
 --- using Haskell parallelism techniques and benchmarking
@@ -56,6 +57,30 @@ allPermutations width = do c <- getCombos(width)
                            p <- getPermutations(c)
                            return p
 
+getLabelMap :: [a] -> (Map.Map Int a)
+getLabelMap as = Map.fromList $ zip [1..] as
+
+numWays :: Int -> Int -> Int
+numWays width height = sum (Map.elems wayMap)
+                       where
+                        wayMap :: Map.Map Int Int
+                        wayMap = wayMapH height (Map.fromList [ (i,1) | i <- labels ])
+                                 where wayMapH :: Int -> (Map.Map Int Int) -> (Map.Map Int Int)
+                                       wayMapH n m
+                                          | n > height = m
+                                          | otherwise = wayMapH (n+1) (Map.fromList [(i, waysWithI i) | i <- labels ])
+                                                        where waysWithI i = maybe 0 sum (waysFromAdj i)
+                                                              waysFromAdj i = fmap (map lookupPrev) (Map.lookup i adjMap)
+                                                              lookupPrev j = maybe 0 id (Map.lookup j m)
+
+                        adjMap :: Map.Map Int [Int]
+                        adjMap = Map.fromList [ (i, [j | j <- labels, validAdj i j]) | i <- labels]
+                        validAdj :: Int -> Int -> Bool
+                        validAdj x y = maybe False id $ do bx <- Map.lookup x labelMap
+                                                           by <- Map.lookup y labelMap
+                                                           return (validAdjacent bx by)
+                        labels = Map.keys labelMap
+                        labelMap = getLabelMap (allPermutations width)
 
 --- Run this
 main :: IO ()
