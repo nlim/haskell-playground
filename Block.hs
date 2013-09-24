@@ -46,6 +46,12 @@ validAdjacent perm1 perm2 = (w2 == w1) && (not (any (\p -> (p /= 0) && (p /= w2)
                             where w2 = sum (map doubleBlockWidth perm2)
                                   w1 = sum (map doubleBlockWidth perm1)
 
+
+validAdj :: Int -> Int -> (Map.Map Int [Block]) -> Bool
+validAdj x y labelMap = maybe False id $ do bx <- Map.lookup x labelMap
+                                            by <- Map.lookup y labelMap
+                                            return (validAdjacent bx by)
+
 dJunctures :: [Block] -> [Int]
 dJunctures bs = (fst r):(snd r)
                 where r = (foldl (\(t, ts) b -> (t + (doubleBlockWidth b), t:ts)) (0,[]) bs)
@@ -74,11 +80,7 @@ numWays width height = sum (Map.elems wayMap)
                                                               lookupPrev j = maybe 0 id (Map.lookup j m)
 
                         adjMap :: Map.Map Int [Int]
-                        adjMap = Map.fromList [ (i, [j | j <- labels, validAdj i j]) | i <- labels]
-                        validAdj :: Int -> Int -> Bool
-                        validAdj x y = maybe False id $ do bx <- Map.lookup x labelMap
-                                                           by <- Map.lookup y labelMap
-                                                           return (validAdjacent bx by)
+                        adjMap = Map.fromList [ (i, [j | j <- labels, (validAdj i j labelMap)]) | i <- labels]
                         labels = Map.keys labelMap
                         labelMap = getLabelMap (allPermutations width)
 
