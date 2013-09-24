@@ -1,5 +1,5 @@
 import qualified Data.Map as Map
-
+import System.Environment
 --- Solves the following problem using a dynamic programming solution
 --- using Haskell parallelism techniques and benchmarking
 --- learned in Parallel and Concurrent Haskell
@@ -15,8 +15,6 @@ doubleBlockWidth :: Block -> Int
 doubleBlockWidth ThreeBlock = 6
 doubleBlockWidth FourFiveBlock = 9
 
-
-data Row
 
 data RowCombo = RowCombo { numThrees :: Int, numFourFives :: Int } deriving (Eq, Ord, Show)
 
@@ -69,26 +67,24 @@ getLabelMap as = Map.fromList $ zip [1..] as
 numWays :: Int -> Int -> Int
 numWays width height = sum (Map.elems wayMap)
                        where
-                        wayMap :: Map.Map Int Int
-                        wayMap = wayMapH height (Map.fromList [ (i,1) | i <- labels ])
-                                 where wayMapH :: Int -> (Map.Map Int Int) -> (Map.Map Int Int)
-                                       wayMapH n m
-                                          | n > height = m
-                                          | otherwise = wayMapH (n+1) (Map.fromList [(i, waysWithI i) | i <- labels ])
-                                                        where waysWithI i = maybe 0 sum (waysFromAdj i)
-                                                              waysFromAdj i = fmap (map lookupPrev) (Map.lookup i adjMap)
-                                                              lookupPrev j = maybe 0 id (Map.lookup j m)
+                         wayMap = wayMapH 1 (Map.fromList [ (i,1) | i <- labels ])
+                         wayMapH :: Int -> (Map.Map Int Int) -> (Map.Map Int Int)
+                         wayMapH n m
+                                | n >= height = m
+                                | otherwise = wayMapH (n+1) (Map.fromList [(i, waysAdj i) | i <- labels ])
+                                  where
+                                    waysAdj i = foldl (\s j -> if (validAdj i j labelMap) then s + (maybe 0 id (Map.lookup j m)) else s) 0 labels
+                         labels = Map.keys labelMap
+                         labelMap = getLabelMap (allPermutations width)
 
-                        adjMap :: Map.Map Int [Int]
-                        adjMap = Map.fromList [ (i, [j | j <- labels, (validAdj i j labelMap)]) | i <- labels]
-                        labels = Map.keys labelMap
-                        labelMap = getLabelMap (allPermutations width)
+parseInt :: [Char] -> Int
+parseInt s = read s
 
---- Run this
+-- Run this
 main :: IO ()
 main = do
-  putStrLn (show (getCombos 48))
-  putStrLn (show (length (allPermutations 48)))
+  [ws,hs] <- getArgs
+  putStrLn $ show $ numWays (parseInt ws) (parseInt hs)
 
 
 
