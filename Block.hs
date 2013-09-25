@@ -1,4 +1,4 @@
-import qualified Data.Map as Map
+import qualified Data.IntMap as M
 import System.Environment
 --- Solves the following problem using a dynamic programming solution
 --- using Haskell parallelism techniques and benchmarking
@@ -45,15 +45,12 @@ validAdjacent perm1 perm2 = (w2 == w1) && (not (any (\p -> (p /= 0) && (p /= w2)
                                   w1 = sum (map doubleBlockWidth perm1)
 
 
-validAdj :: Int -> Int -> (Map.Map Int [Block]) -> Bool
-validAdj x y labelMap = maybe False id $ do bx <- Map.lookup x labelMap
-                                            by <- Map.lookup y labelMap
-                                            return (validAdjacent bx by)
+validAdj :: Int -> Int -> (M.IntMap [Block]) -> Bool
+validAdj x y labelMap = validAdjacent (labelMap M.! x) (labelMap M.! y)
 
 dJunctures :: [Block] -> [Int]
 dJunctures bs = (fst r):(snd r)
                 where r = (foldl (\(t, ts) b -> (t + (doubleBlockWidth b), t:ts)) (0,[]) bs)
-
 
 
 allPermutations :: Int -> [[Block]]
@@ -61,20 +58,20 @@ allPermutations width = do c <- getCombos(width)
                            p <- getPermutations(c)
                            return p
 
-getLabelMap :: [a] -> (Map.Map Int a)
-getLabelMap as = Map.fromList $ zip [1..] as
+getLabelMap :: [a] -> (M.IntMap a)
+getLabelMap as = M.fromList $ zip [1..] as
 
 numWays :: Int -> Int -> Int
-numWays width height = sum (Map.elems wayMap)
+numWays width height = (sum . M.elems) wayMap
                        where
-                         wayMap = wayMapH 1 (Map.fromList [ (i,1) | i <- labels ])
-                         wayMapH :: Int -> (Map.Map Int Int) -> (Map.Map Int Int)
+                         wayMap = wayMapH 1 (M.fromList [ (i,1) | i <- labels ])
+                         wayMapH :: Int -> (M.IntMap Int) -> (M.IntMap Int)
                          wayMapH n m
                                 | n >= height = m
-                                | otherwise = wayMapH (n+1) (Map.fromList [(i, waysAdj i) | i <- labels ])
+                                | otherwise = wayMapH (n+1) (M.fromList [(i, waysAdj i) | i <- labels ])
                                   where
-                                    waysAdj i = foldl (\s j -> if (validAdj i j labelMap) then s + (maybe 0 id (Map.lookup j m)) else s) 0 labels
-                         labels = Map.keys labelMap
+                                    waysAdj i = foldl (\s j -> if (validAdj i j labelMap) then s + (m M.! j) else s) 0 labels
+                         labels = M.keys labelMap
                          labelMap = getLabelMap (allPermutations width)
 
 parseInt :: [Char] -> Int
