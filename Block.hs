@@ -105,6 +105,7 @@ numWays width height = (sum . M.elems) wayMap
                          wayMap = wayMapH 1 (M.fromList [ (i,1) | i <- labels ])
                          wayMapH :: Int -> (M.IntMap Int) -> (M.IntMap Int)
                          wayMapH n m
+                                | n <= 0 = M.fromList [ (i,0) | i <- labels]
                                 | n >= height = m
                                 | otherwise = wayMapH (n+1) $ M.fromList [(i, waysAdj i) | i <- labels]
                                   where
