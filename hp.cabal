@@ -1,0 +1,12 @@
+name:                hp
+Version:             0.0
+Synopsis:            My Haskell Playground
+Description:         Me learning haskell by playing around.
+License:             GPL
+License-file:        LICENSE
+Author:              Nathaniel Lim
+Maintainer:          Nathaniel Lim <nathaniel.j.lim@gmail.com>
+Build-Depends:       base
+
+Executable:          block
+Main-is:             Block.hs
