@@ -1,5 +1,10 @@
 import qualified Data.IntMap as M
 import System.Environment
+import Control.Parallel.Strategies (Strategy, runEval, parMap, rpar, evalTuple2, rseq)
+import Data.Set (Set)
+import qualified Data.Set as Set
+
+
 --- Solves the following problem using a dynamic programming solution
 --- using Haskell parallelism techniques and benchmarking
 --- learned in Parallel and Concurrent Haskell
@@ -49,8 +54,42 @@ validAdj :: Int -> Int -> (M.IntMap [Block]) -> Bool
 validAdj x y labelMap = validAdjacent (labelMap M.! x) (labelMap M.! y)
 
 dJunctures :: [Block] -> [Int]
-dJunctures bs = (fst r):(snd r)
+dJunctures bs = filter (\i -> i /= 0 && i /= w) ((fst r):(snd r))
                 where r = (foldl (\(t, ts) b -> (t + (doubleBlockWidth b), t:ts)) (0,[]) bs)
+                      w = sum (map doubleBlockWidth bs)
+
+getValidAdjMap :: M.IntMap [Block] -> M.IntMap (Set Int)
+getValidAdjMap blockMap = M.fromList $ zip (M.keys bIdToDj) (parMap rseq valids (M.keys bIdToDj))
+                       where
+                          valids :: Int -> (Set Int)
+                          valids bid = foldl
+                            (\s dj -> remBlockIdsForDj dj s)
+                            (Set.fromList (M.keys bIdToDj))
+                            (bIdToDj M.! bid)
+
+                          remBlockIdsForDj :: Int -> (Set Int) -> (Set Int)
+                          remBlockIdsForDj dj s = foldl (\s' bid ->  Set.delete bid s') s (dJunctureToBlockIds M.! dj)
+
+                          dJunctureToBlockIds = dJunctureToBlockIds' bIdToDj
+
+                          bIdToDj = bIdToDj' blockMap
+
+dJunctureToBlockIds' :: M.IntMap [Int] -> M.IntMap [Int]
+dJunctureToBlockIds' bIdToDj = foldl
+  (\m i -> foldl
+    (\m' j -> case (M.lookup j m') of
+                Just is -> M.insert j (i:is) m'
+                Nothing -> M.insert j [i] m')
+    m
+    (bIdToDj M.! i))
+  M.empty
+  (M.keys bIdToDj)
+
+
+
+bIdToDj' :: (M.IntMap [Block]) -> M.IntMap [Int]
+bIdToDj' blockMap = M.fromList $ map (\i -> (i, dJunctures (blockMap M.! i))) (M.keys blockMap)
+
 
 
 allPermutations :: Int -> [[Block]]
@@ -68,9 +107,13 @@ numWays width height = (sum . M.elems) wayMap
                          wayMapH :: Int -> (M.IntMap Int) -> (M.IntMap Int)
                          wayMapH n m
                                 | n >= height = m
-                                | otherwise = wayMapH (n+1) (M.fromList [(i, waysAdj i) | i <- labels ])
+                                --- We can parallelize this step
+                                | otherwise = wayMapH (n+1) $ M.fromList [(i, waysAdj i) | i <- labels]
                                   where
-                                    waysAdj i = foldl (\s j -> if (validAdj i j labelMap) then s + (m M.! j) else s) 0 labels
+                                    waysAdj i = Set.foldl (\s j -> s + (m M.! j)) 0 (validAdjMap M.! i)
+
+
+                         validAdjMap = getValidAdjMap labelMap
                          labels = M.keys labelMap
                          labelMap = getLabelMap (allPermutations width)
 
@@ -83,5 +126,10 @@ main = do
   [ws,hs] <- getArgs
   putStrLn $ show $ numWays (parseInt ws) (parseInt hs)
 
-
+--- time ./Block 48 10  +RTS -N4 -l
+--- 806844323190414
+---
+--- real  0m2.889s
+--- user  0m10.923s
+--- sys 0m0.445s
 
