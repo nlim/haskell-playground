@@ -1,6 +1,6 @@
 import qualified Data.IntMap as M
 import System.Environment
-import Control.Parallel.Strategies (Strategy, runEval, parMap, rpar, evalTuple2, rseq)
+import Control.Parallel.Strategies (Strategy, runEval, parMap, parBuffer, rpar, evalTuple2, rseq, rdeepseq, using, withStrategy)
 import Data.Set (Set)
 import qualified Data.Set as Set
 
@@ -60,7 +60,7 @@ dJunctures bs = filter (\i -> i /= 0 && i /= w) ((fst r):(snd r))
 --- We can build a Map from blockId => Set of blockIds that are valid to be adjacent to blockId
 --- using a parallel Strategy
 getValidAdjMap :: M.IntMap [Block] -> M.IntMap (Set Int)
-getValidAdjMap blockMap = M.fromList $ zip (M.keys bIdToDj) (parMap rseq valids (M.keys bIdToDj))
+getValidAdjMap blockMap = M.fromList (withStrategy (parBuffer 100 rdeepseq) (map (\i -> (i, valids i)) (M.keys bIdToDj)))
                        where
                           valids :: Int -> (Set Int)
                           valids bid = foldl
