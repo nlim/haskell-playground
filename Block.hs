@@ -70,19 +70,19 @@ getValidAdjMap blockMap = M.fromList (withStrategy (parBuffer 100 rdeepseq) (map
 
                           remBlockIdsForDj :: Int -> (Set Int) -> (Set Int)
                           remBlockIdsForDj dj s = foldl (\s' bid ->  Set.delete bid s') s (dJunctureToBlockIds M.! dj)
-                          dJunctureToBlockIds = dJunctureToBlockIds' bIdToDj
+                          dJunctureToBlockIds = groupKeysByValue bIdToDj
                           bIdToDj = bIdToDj' blockMap
 
-dJunctureToBlockIds' :: M.IntMap [Int] -> M.IntMap [Int]
-dJunctureToBlockIds' bIdToDj = foldl
+groupKeysByValue :: M.IntMap [Int] -> M.IntMap [Int]
+groupKeysByValue x = foldl
   (\m i -> foldl
     (\m' j -> case (M.lookup j m') of
                 Just is -> M.insert j (i:is) m'
                 Nothing -> M.insert j [i] m')
     m
-    (bIdToDj M.! i))
+    (x M.! i))
   M.empty
-  (M.keys bIdToDj)
+  (M.keys x)
 
 
 
