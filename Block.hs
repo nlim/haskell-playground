@@ -32,26 +32,16 @@ getPermutations rc = go rc [[]]
                            go (RowCombo 0 j) results = [r ++ (take j (repeat FourFiveBlock)) | r <- results]
                            go (RowCombo i j) results = (go (RowCombo (i-1) j) ([r ++ [ThreeBlock] | r <- results])) ++ (go (RowCombo i (j-1)) ([r ++ [FourFiveBlock] | r <- results]))
 
-
-getWidth :: RowCombo -> Float
-getWidth (RowCombo i j) = (3 * x) + (4.5 * y)
-                        where x = fromIntegral i :: Float
-                              y = fromIntegral j :: Float
-
+--- Get all the combinations of
+--- choosing from the two types of blocks that add up to w
 getCombos :: Int -> [RowCombo]
 getCombos w = [ RowCombo i j | i <- [0..max3], j <- [0..max45], ((i*6) + (j*9)) == (2*w) ]
               where max3  = ((2*w) `div` 6)
                     max45 = ((2*w) `div` 9)
 
-validAdjacent :: [Block] -> [Block] -> Bool
-validAdjacent perm1 perm2 = (w2 == w1) && (not (any (\p -> (p /= 0) && (p /= w2) && p `elem` (dJunctures perm2)) (dJunctures perm1)))
-                            where w2 = sum (map doubleBlockWidth perm2)
-                                  w1 = sum (map doubleBlockWidth perm1)
 
-
-validAdj :: Int -> Int -> (M.IntMap [Block]) -> Bool
-validAdj x y labelMap = validAdjacent (labelMap M.! x) (labelMap M.! y)
-
+--- Get a List of all the x coordinates (times 2) where there is an intersection
+--- of two blocks, that is not at either end
 dJunctures :: [Block] -> [Int]
 dJunctures bs = filter (\i -> i /= 0 && i /= w) ((fst r):(snd r))
                 where r = (foldl (\(t, ts) b -> (t + (doubleBlockWidth b), t:ts)) (0,[]) bs)
@@ -73,6 +63,8 @@ getValidAdjMap blockMap = M.fromList (withStrategy (parBuffer 100 rdeepseq) (map
                           dJunctureToBlockIds = groupKeysByValue bIdToDj
                           bIdToDj = bIdToDj' blockMap
 
+--- Inverts the IntMap so that we can efficiently find all the keys that map
+--- to a given value element
 groupKeysByValue :: M.IntMap [Int] -> M.IntMap [Int]
 groupKeysByValue x = foldl
   (\m i -> foldl
@@ -86,6 +78,9 @@ groupKeysByValue x = foldl
 
 
 
+--- Given a IntMap which just the Block configurations labeled by an integer Key
+--- Produce an IntMap which provides all the Block juncture points for a given integer key label for
+--- the block configuration
 bIdToDj' :: (M.IntMap [Block]) -> M.IntMap [Int]
 bIdToDj' blockMap = M.fromList $ map (\i -> (i, dJunctures (blockMap M.! i))) (M.keys blockMap)
 
@@ -110,8 +105,6 @@ numWays width height = (sum . M.elems) wayMap
                                 | otherwise = wayMapH (n+1) $ M.fromList [(i, waysAdj i) | i <- labels]
                                   where
                                     waysAdj i = Set.foldl (\s j -> s + (m M.! j)) 0 (validAdjMap M.! i)
-
-
                          validAdjMap = getValidAdjMap labelMap
                          labels = M.keys labelMap
                          labelMap = getLabelMap (allPermutations width)
