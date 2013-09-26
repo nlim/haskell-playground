@@ -24,7 +24,6 @@ doubleBlockWidth FourFiveBlock = 9
 data RowCombo = RowCombo { numThrees :: Int, numFourFives :: Int } deriving (Eq, Ord, Show)
 
 
-
 getPermutations :: RowCombo -> [[Block]]
 getPermutations rc = go rc [[]]
                      where go :: RowCombo -> [[Block]] -> [[Block]]
@@ -58,6 +57,8 @@ dJunctures bs = filter (\i -> i /= 0 && i /= w) ((fst r):(snd r))
                 where r = (foldl (\(t, ts) b -> (t + (doubleBlockWidth b), t:ts)) (0,[]) bs)
                       w = sum (map doubleBlockWidth bs)
 
+--- We can build a Map from blockId => Set of blockIds that are valid to be adjacent to blockId
+--- using a parallel Strategy
 getValidAdjMap :: M.IntMap [Block] -> M.IntMap (Set Int)
 getValidAdjMap blockMap = M.fromList $ zip (M.keys bIdToDj) (parMap rseq valids (M.keys bIdToDj))
                        where
@@ -69,9 +70,7 @@ getValidAdjMap blockMap = M.fromList $ zip (M.keys bIdToDj) (parMap rseq valids 
 
                           remBlockIdsForDj :: Int -> (Set Int) -> (Set Int)
                           remBlockIdsForDj dj s = foldl (\s' bid ->  Set.delete bid s') s (dJunctureToBlockIds M.! dj)
-
                           dJunctureToBlockIds = dJunctureToBlockIds' bIdToDj
-
                           bIdToDj = bIdToDj' blockMap
 
 dJunctureToBlockIds' :: M.IntMap [Int] -> M.IntMap [Int]
@@ -107,7 +106,6 @@ numWays width height = (sum . M.elems) wayMap
                          wayMapH :: Int -> (M.IntMap Int) -> (M.IntMap Int)
                          wayMapH n m
                                 | n >= height = m
-                                --- We can parallelize this step
                                 | otherwise = wayMapH (n+1) $ M.fromList [(i, waysAdj i) | i <- labels]
                                   where
                                     waysAdj i = Set.foldl (\s j -> s + (m M.! j)) 0 (validAdjMap M.! i)
