@@ -67,15 +67,11 @@ getValidAdjMap blockMap = M.fromList (withStrategy (parBuffer 100 rdeepseq) (map
 --- Inverts the IntMap so that we can efficiently find all the keys that map
 --- to a given value element
 groupKeysByValue :: M.IntMap [Int] -> M.IntMap [Int]
-groupKeysByValue x = foldl
-  (\m i -> foldl
-    (\m' j -> case M.lookup j m' of
-                Just is -> M.insert j (i:is) m'
-                Nothing -> M.insert j [i] m')
-    m
-    (x M.! i))
-  M.empty
-  (M.keys x)
+groupKeysByValue x = foldl' (flip addKeyToAllValues) M.empty (M.keys x)
+  where addKeyToAllValues i' m' =  foldl' (\m'' j -> case M.lookup j m'' of
+                                                      Just is -> M.insert j (i':is) m''
+                                                      Nothing -> M.insert j [i'] m'') m' (x M.! i')
+
 
 
 
@@ -95,16 +91,15 @@ getLabelMap :: [a] -> M.IntMap a
 getLabelMap as = M.fromList $ zip [1..] as
 
 numWays :: Int -> Int -> Int
-numWays width height = (sum . M.elems) wayMap
+numWays width height = (sum . M.elems) (wayMap 1 (M.fromList [ (i,1) | i <- labels ]))
                        where
-                         wayMap = wayMapH 1 (M.fromList [ (i,1) | i <- labels ])
-                         wayMapH :: Int -> M.IntMap Int -> M.IntMap Int
-                         wayMapH n m
-                                | n <= 0 = M.fromList [ (i,0) | i <- labels]
-                                | n >= height = m
-                                | otherwise = wayMapH (n+1) $ M.fromList [(i, waysAdj i) | i <- labels]
-                                  where
-                                    waysAdj i = Set.foldl (\s j -> s + (m M.! j)) 0 (validAdjMap M.! i)
+                         wayMap :: Int -> M.IntMap Int -> M.IntMap Int
+                         wayMap n m
+                               | n <= 0 = M.fromList [ (i,0) | i <- labels]
+                               | n >= height = m
+                               | otherwise = wayMap (n+1) $ M.fromList [(i, waysAdj i) | i <- labels]
+                                 where
+                                   waysAdj i = Set.foldl (\s j -> s + (m M.! j)) 0 (validAdjMap M.! i)
                          validAdjMap = getValidAdjMap labelMap
                          labels = M.keys labelMap
                          labelMap = getLabelMap (allPermutations width)
