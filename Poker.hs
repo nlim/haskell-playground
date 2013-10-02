@@ -4,7 +4,10 @@ import qualified Data.Map as Map
 import qualified Data.List as List
 
 --- Data Types
-newtype Rank = Rank { getRank :: Int } deriving (Show, Ord, Eq)
+--- newtype Rank = Rank { getRank :: Int } deriving (Show, Ord, Eq)
+
+data Rank = Ace | King | Queen | Jack | Ten | Nine | Eight | Seven | Six | Five | Four | Three | Two deriving (Show, Eq)
+--- data Rank = Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | Jack | Queen | King | Ace
 
 data Suit = Diamonds | Hearts | Spades | Clubs deriving (Show, Eq, Ord)
 
@@ -31,6 +34,9 @@ instance Eq Card where
 
 instance Ord Card where
   compare (Card s1 r1) (Card s2 r2) = compare r1 r2
+
+instance Ord Rank where
+  compare r1 r2 = compare (value r1) (value r2)
 
 
 instance Eq HandType where
@@ -62,6 +68,12 @@ ifEqThen :: Ordering -> Ordering -> Ordering
 ifEqThen EQ y = y
 ifEqThen x _ = x
 
+instance Eq Hand where
+  (==) h1 h2 = (==) (getHandType h1) (getHandType h2)
+
+instance Ord Hand where
+  compare h1 h2 = compare (getHandType h1) (getHandType h2)
+
 class Valuable a where
   value :: a -> Int
 
@@ -76,17 +88,39 @@ instance Valuable HandType where
   value (Pair _ _) = 2
   value ht = 1 -- NoPair
 
+instance Valuable Rank where
+  value Ace = 14
+  value King = 13
+  value Queen = 12
+  value Jack = 11
+  value Ten = 10
+  value Nine = 9
+  value Eight = 8
+  value Seven = 7
+  value Six = 6
+  value Five = 5
+  value Four = 4
+  value Three = 3
+  value Two = 2
+
 
 --- Creation Functions
 makeRank :: Int -> Try Rank
+makeRank 1 = Success Ace
+makeRank 2 = Success Two
+makeRank 3 = Success Three
+makeRank 4 = Success Four
+makeRank 5 = Success Five
+makeRank 6 = Success Six
+makeRank 7 = Success Seven
+makeRank 8 = Success Eight
+makeRank 9 = Success Nine
+makeRank 10 = Success Ten
+makeRank 11 = Success Jack
+makeRank 12 = Success Queen
+makeRank 13 = Success King
+makeRank n = Failure ("Rank integer: " ++ (show n) ++ " is not between 1..13")
 
-makeRank n
-  | n >= 1 && n <= 13 = Success (Rank n)
-  | otherwise = Failure ("Rank integer: " ++ (show n) ++ " is not between 1..13")
-
-intRank :: Rank -> Int
-
-intRank (Rank i) = i
 
 makeSuit :: Char -> Try Suit
 makeSuit 'C' =  Success Clubs
@@ -153,25 +187,32 @@ invertedRankHistogram h = Map.foldWithKey collectRankByCount (Map.empty) (getRan
 ---collectRankByCount :: Rank -> Int -> (Map.Map Int [Rank]) -> (Map.Map Int [Rank])
 collectRankByCount :: Rank -> Int -> (Map.Map Int [Rank]) -> (Map.Map Int [Rank])
 collectRankByCount r count m = case (Map.lookup count m) of
-      Just rs -> Map.insert count (r:rs) m
-      Nothing -> Map.insert count [r] m
+                                 Just rs -> Map.insert count (r:rs) m
+                                 Nothing -> Map.insert count [r] m
 
 isFlush :: Hand -> Bool
 isFlush h = (Map.size (getSuitHistogram h)) == 1
 
+isWheel :: [Rank]-> Bool
+isWheel rs = case (List.sort rs) of
+               [Two,Three,Four,Five,Ace] -> True
+               otherwise -> False
+
 isStraight :: Hand -> Bool
-isStraight h = all (\((Rank i), (Rank j)) -> i + 1 == j) (selfZip (List.sort (rankList h)))
+isStraight h = (isWheel sortedRanks) || all isAdj (selfZip sortedRanks)
+               where sortedRanks = (List.sort . rankList) h
+                     isAdj (r1,r2) = (value r1 + 1) == (value r2)
 
 selfZip :: [a] -> [(a,a)]
 selfZip as = zip as (tail as)
 
 getHandType :: Hand -> HandType
 getHandType h = case (flush, straight, quads, trips, pairs, singles) of
-                  (True, True, _, _, _, (s:t)) -> StraightFlush s
+                  (True, True, _, _, _, ss) -> if isWheel ss then StraightFlush Five else StraightFlush (head ss)
                   (False, False, (q:[]), _, _, (s:t)) -> Quads q singles
                   (False, False, _, (t:[]), (p:[]), []) -> FullHouse t p
                   (True, False, _, _, _, _) -> Flush singles
-                  (False, True, _, _, _, (s:t)) ->  Straight s
+                  (False, True, _, _, _, ss) -> if isWheel ss then Straight Five else Straight (head ss)
                   (False, False, _, (t:[]), [], (s1:s2:[])) -> Trips t singles
                   (False, False, _, _, (p1:p2:[]), (s:[])) -> TwoPair p1 p2 singles
                   otherwise -> NoPair singles
