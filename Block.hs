@@ -1,6 +1,6 @@
 import qualified Data.IntMap as M
 import System.Environment
-import Control.Parallel.Strategies (Strategy, runEval, parMap, parBuffer, rpar, evalTuple2, rseq, rdeepseq, using, withStrategy)
+import Control.Parallel.Strategies (Strategy, parBuffer,rdeepseq, withStrategy)
 import Data.Set (Set)
 import Data.List (foldl')
 import qualified Data.Set as Set
@@ -31,7 +31,8 @@ getPermutations rc = go rc [[]]
                            go (RowCombo 0 0) results = results
                            go (RowCombo i 0) results = [r ++ replicate i ThreeBlock | r <- results]
                            go (RowCombo 0 j) results = [r ++ replicate j FourFiveBlock | r <- results]
-                           go (RowCombo i j) results = go (RowCombo (i-1) j) [r ++ [ThreeBlock] | r <- results] ++ go (RowCombo i (j-1)) [r ++ [FourFiveBlock] | r <- results]
+                           go (RowCombo i j) results =
+                             go (RowCombo (i-1) j) [r ++ [ThreeBlock] | r <- results] ++ go (RowCombo i (j-1)) [r ++ [FourFiveBlock] | r <- results]
 
 --- Get all the combinations of
 --- choosing from the two types of blocks that add up to w
@@ -45,7 +46,9 @@ getCombos w = [ RowCombo i j | i <- [0..max3], j <- [0..max45], ((i*6) + (j*9)) 
 --- of two blocks, that is not at either end
 dJunctures :: [Block] -> [Int]
 dJunctures bs = filter (\i -> i /= 0 && i /= w) (uncurry (:) r)
-                where r = foldl' (\(t, ts) b -> (t + doubleBlockWidth b, t:ts)) (0,[]) bs
+                where r :: (Int, [Int])
+                      r = foldl' (\(t, ts) b -> (t + doubleBlockWidth b, t:ts)) (0,[]) bs
+                      w :: Int
                       w = sum (map doubleBlockWidth bs)
 
 --- We can build a Map from blockId => Set of blockIds that are valid to be adjacent to blockId
@@ -54,25 +57,21 @@ getValidAdjMap :: M.IntMap [Block] -> M.IntMap (Set Int)
 getValidAdjMap blockMap = M.fromList (withStrategy (parBuffer 100 rdeepseq) (map (\i -> (i, valids i)) (M.keys bIdToDj)))
                        where
                           valids :: Int -> Set Int
-                          valids bid = foldl'
-                            (flip remBlockIdsForDj)
-                            (Set.fromList (M.keys bIdToDj))
-                            (bIdToDj M.! bid)
-
-                          remBlockIdsForDj :: Int -> Set Int -> Set Int
-                          remBlockIdsForDj dj s = foldl' (flip Set.delete) s (dJunctureToBlockIds M.! dj)
+                          valids bid = foldl' remBlockIdsForDj (Set.fromList (M.keys bIdToDj)) (bIdToDj M.! bid)
+                          remBlockIdsForDj :: Set Int -> Int -> Set Int
+                          remBlockIdsForDj s dj = foldl' (flip Set.delete) s (dJunctureToBlockIds M.! dj)
                           dJunctureToBlockIds = groupKeysByValue bIdToDj
                           bIdToDj = bIdToDj' blockMap
 
 --- Inverts the IntMap so that we can efficiently find all the keys that map
 --- to a given value element
 groupKeysByValue :: M.IntMap [Int] -> M.IntMap [Int]
-groupKeysByValue x = foldl' (flip addKeyToAllValues) M.empty (M.keys x)
-  where addKeyToAllValues i' m' =  foldl' (\m'' j -> case M.lookup j m'' of
-                                                      Just is -> M.insert j (i':is) m''
-                                                      Nothing -> M.insert j [i'] m'') m' (x M.! i')
-
-
+groupKeysByValue x = foldl' addKeyToAllValues M.empty $ M.keys x
+  where addKeyToAllValues m' i' =  foldl' (\m'' j -> case M.lookup j m'' of
+                                                       Just is -> M.insert j (i':is) m''
+                                                       Nothing -> M.insert j [i'] m'')
+                                           m'
+                                           (x M.! i')
 
 
 --- Given a IntMap which just the Block configurations labeled by an integer Key
@@ -113,10 +112,11 @@ main = do
   [ws,hs] <- getArgs
   print (numWays (parseInt ws) (parseInt hs))
 
---- time ./Block 48 10  +RTS -N4 -l
---- 806844323190414
----
---- real  0m2.889s
---- user  0m10.923s
---- sys 0m0.445s
+
+-- $   time ./Block 48 10 +RTS -N8
+-- 806844323190414
+--
+-- real  0m2.246s
+-- user  0m16.343s
+-- sys 0m0.933s
 
