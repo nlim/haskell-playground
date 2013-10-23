@@ -59,8 +59,12 @@ loadCharPair (FreqData ih h s) cp = FreqData ih' h' (s+1)
     c = maybe 0 id (Map.lookup cp h)
     ih' = (addCp . removeCp) ih
             where
-              removeCp ih'' = maybe ih'' (\s -> Map.insert c (Set.delete cp s) ih'') (Map.lookup c ih'')
-              addCp ih''    = maybe (Map.insert c' (Set.fromList [cp]) ih'') (\s -> Map.insert c' (Set.insert cp s) ih'') (Map.lookup c' ih'')
+              removeCp ih'' = maybe ih''
+                                    (\s -> Map.insert c (Set.delete cp s) ih'')
+                                    (Map.lookup c ih'')
+              addCp ih''    = maybe (Map.insert c' (Set.fromList [cp]) ih'')
+                                    (\s -> Map.insert c' (Set.insert cp s) ih'')
+                                    (Map.lookup c' ih'')
 
 emptyFreqData :: FreqData
 emptyFreqData = FreqData Map.empty Map.empty 0
