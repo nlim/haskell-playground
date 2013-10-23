@@ -2,6 +2,21 @@ import Data.Char (toLower)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Data.List (foldl', sortBy)
+import System.IO
+
+main :: IO ()
+main = readLoop emptyFreqData
+
+
+readLoop :: FreqData -> IO ()
+readLoop fd = do iseof <- isEOF
+                 if iseof
+                 then (putStrLn . freqMessage) fd
+                 else do inputStr <- getLine
+                         readLoop (accumFreqFromLine fd inputStr)
+
+
+
 
 type CharPair = (Char, Char)
 
@@ -20,14 +35,12 @@ limit = 100
 testPairs :: [CharPair]
 testPairs = replicate 10 ('f', 'b')
 
-testFreq :: FreqData
-testFreq = (accumFreq . pairsFromLine) "The quick brown fox jumped over the lazy dog"
-
 freqMessage :: FreqData -> String
+freqMessage = show
 
 
-accumFreq :: [CharPair] -> FreqData
-accumFreq = foldl' loadCharPair emptyFreqData 
+accumFreqFromLine :: FreqData -> String -> FreqData
+accumFreqFromLine fd s = foldl' loadCharPair fd (pairsFromLine s)
 
 pairsFromLine :: String -> [CharPair]
 pairsFromLine s = (words s) >>= pairsFromWord
