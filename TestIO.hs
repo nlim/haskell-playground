@@ -9,6 +9,17 @@ main = do
   hClose inh
   hClose outh
 
+forever :: IO a -> IO b
+forever p = p >> forever p
+
+echo :: IO ()
+echo = getLine >>= putStrLn
+
+cat :: IO ()
+cat = forever echo
+
+
+
 mainloop :: Handle -> Handle -> IO ()
 mainloop inh outh = do ineof <- hIsEOF inh
                        if ineof

@@ -30,13 +30,19 @@ data FreqData = FreqData {
   size :: Int
 } deriving (Show)
 
+
 limit = 100
 
 testPairs :: [CharPair]
 testPairs = replicate 10 ('f', 'b')
 
 freqMessage :: FreqData -> String
-freqMessage = show
+freqMessage = show . ca
+
+calcFreqStats :: FreqData -> ([(ChairPair, Float)], (Float)) 
+calcFreqStats fd = (topPairs, numTopPairs `div` (size fd)
+  where 
+    (topPairs, numTopPairs) =  
 
 
 accumFreqFromLine :: FreqData -> String -> FreqData
