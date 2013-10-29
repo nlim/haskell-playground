@@ -15,9 +15,6 @@ readLoop fd = do iseof <- isEOF
                  else do inputStr <- getLine
                          readLoop (accumFreqFromLine fd inputStr)
 
-
-
-
 type CharPair = (Char, Char)
 
 type InverseHisto a = Map.Map Int (Set.Set a)
@@ -30,19 +27,26 @@ data FreqData = FreqData {
   size :: Int
 } deriving (Show)
 
-
-limit = 100
-
-testPairs :: [CharPair]
-testPairs = replicate 10 ('f', 'b')
+emptyFreqData :: FreqData
+emptyFreqData = FreqData Map.empty Map.empty 0
 
 freqMessage :: FreqData -> String
-freqMessage = show . ca
+freqMessage = show . calcFreqStats
 
-calcFreqStats :: FreqData -> ([(ChairPair, Float)], (Float)) 
-calcFreqStats fd = (topPairs, numTopPairs `div` (size fd)
-  where 
-    (topPairs, numTopPairs) =  
+calcFreqStats :: FreqData -> ([(CharPair, Float)], (Float))
+calcFreqStats fd = (topPairs, percentage numTopPairs)
+  where
+    limit :: Int
+    limit = 10
+    s :: Int
+    s = size fd
+    percentage i = (100.0 * ((fromIntegral i) / (fromIntegral s)))
+    topCounts :: [Int]
+    topCounts = ((map fst) . Map.toDescList . inverseHisto) fd
+    allTopPairs :: [(CharPair, Float)]
+    allTopPairs = [ (cp, percentage i) | i <- topCounts, cp <- (Set.toList ((inverseHisto fd) Map.! i))]
+    topPairs = take limit allTopPairs
+    numTopPairs = foldl' (\sum cp -> sum + ((histo fd) Map.! cp)) 0 ((map fst) topPairs)
 
 
 accumFreqFromLine :: FreqData -> String -> FreqData
@@ -71,13 +75,5 @@ loadCharPair (FreqData ih h s) cp = FreqData ih' h' (s+1)
               addCp ih''    = maybe (Map.insert c' (Set.fromList [cp]) ih'')
                                     (\s -> Map.insert c' (Set.insert cp s) ih'')
                                     (Map.lookup c' ih'')
-
-emptyFreqData :: FreqData
-emptyFreqData = FreqData Map.empty Map.empty 0
-
-
-
-
-
 
 
