@@ -75,5 +75,3 @@ loadCharPair (FreqData ih h s) cp = FreqData ih' h' (s+1)
               addCp ih''    = maybe (Map.insert c' (Set.fromList [cp]) ih'')
                                     (\s -> Map.insert c' (Set.insert cp s) ih'')
                                     (Map.lookup c' ih'')
-
-
