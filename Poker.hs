@@ -168,9 +168,8 @@ suitList :: Hand -> [Suit]
 suitList h = map (\c -> case c of Card s _ -> s) (cardList h)
 
 incrementHistogram :: (Ord a) => a -> (Map.Map a Int) -> (Map.Map a Int)
-incrementHistogram k m = case Map.lookup k m of
-                           Just v -> Map.insert k (v + 1) m
-                           Nothing -> Map.insert k 1 m
+incrementHistogram k m = Map.insert k (v+1) m
+			 where v = maybe 0 id (Map.lookup k m)
 
 populateHistogram :: (Ord a) => [a] -> (Map.Map a Int)
 populateHistogram list = foldr incrementHistogram Map.empty list
