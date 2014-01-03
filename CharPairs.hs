@@ -5,15 +5,14 @@ import Data.List (foldl', sortBy)
 import System.IO
 
 main :: IO ()
-main = readLoop emptyFreqData
+main = untilEOF (putStrLn . freqMessage) accumFreqFromLine emptyFreqData
 
-
-readLoop :: FreqData -> IO ()
-readLoop fd = do iseof <- isEOF
-                 if iseof
-                 then (putStrLn . freqMessage) fd
-                 else do inputStr <- getLine
-                         readLoop (accumFreqFromLine fd inputStr)
+untilEOF :: (a -> IO ()) -> (a -> String -> a) -> a -> IO ()
+untilEOF iof r a = do iseof <- isEOF
+                      if iseof
+                      then iof a
+                      else do inputStr <- getLine
+                              untilEOF iof r (r a inputStr)
 
 type CharPair = (Char, Char)
 
