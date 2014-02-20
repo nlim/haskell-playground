@@ -5,20 +5,20 @@ data Month = Jan | Feb | Mar | Apr | May | Jun | July | Aug | Sept | Oct | Nov |
 class Eq s => Cycle s where
   start :: s
   next  :: s -> s
-  prev  :: s -> s
+  back  :: s -> s
   end   :: s
 
 instance Cycle Day where
   start  = minBound
   end    = maxBound
   next d = if d == end then start else succ d
-  prev d = if d == start then end else prev d
+  back d = if d == start then end else pred d
 
 instance Cycle Month where
   start  = minBound
   end    = maxBound
   next d = if d == end then start else succ d
-  prev d = if d == start then end else prev d
+  back d = if d == start then end else pred d
 
 cycleC :: Cycle a => a -> [a]
 cycleC a = a : (cycleC $ next a)
