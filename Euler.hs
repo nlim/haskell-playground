@@ -1,7 +1,13 @@
+{-# LANGUAGE BangPatterns #-}
+
+
+module Euler where
 import Control.Monad.State.Lazy
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Data.List(tails)
+
+
 
 --- Solving some problems at http://projecteuler.net/
 fibs' :: Int -> [Int]
@@ -30,8 +36,8 @@ evenFibsSum limit = go limit 1 1 0
 fibs = 1 : 2 : zipWith (+) fibs (tail fibs)
 fResult = sum $ filter even $ takeWhile (< 4000000) fibs
 
-main :: IO ()
-main = other
+--main :: IO ()
+--main = other
 
 
 {- Project Euler #__ circlePrime -}
