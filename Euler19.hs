@@ -2,26 +2,11 @@ data Day = Sunday | Monday | Tuesday | Wednesday | Thursday | Friday | Saturday 
 data Month = Jan | Feb | Mar | Apr | May | Jun | July | Aug | Sept | Oct | Nov | Dec deriving (Show, Eq, Enum, Bounded)
 
 
-class Eq s => Cycle s where
-  start :: s
-  next  :: s -> s
-  back  :: s -> s
-  end   :: s
+next :: (Eq a, Enum a, Bounded a) => a -> a
+next d = if d == maxBound then minBound else succ d
 
-instance Cycle Day where
-  start  = minBound
-  end    = maxBound
-  next d = if d == end then start else succ d
-  back d = if d == start then end else pred d
-
-instance Cycle Month where
-  start  = minBound
-  end    = maxBound
-  next d = if d == end then start else succ d
-  back d = if d == start then end else pred d
-
-cycleC :: Cycle a => a -> [a]
-cycleC a = a : (cycleC $ next a)
+back :: (Eq a, Enum a, Bounded a) => a -> a
+back d = if d == minBound then maxBound else pred d
 
 newtype DayOfMonth = DayOfMonth { intValue :: Int } deriving (Show)
 
@@ -73,7 +58,7 @@ nextDate date = Date { dayOfWeek = next $ dayOfWeek date, dayOfMonth = dm', year
     dm' = if nextMonth then DayOfMonth 1 else DayOfMonth (intDm + 1)
     m' = ((if nextMonth then next else id) . month) date
     isNextYear :: Bool
-    isNextYear = and [nextMonth, month date == end]
+    isNextYear = and [nextMonth, month date == maxBound]
     y' = ((if isNextYear then nextYear else id) . year) date
 
 basis :: Date

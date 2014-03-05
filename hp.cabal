@@ -1,12 +1,47 @@
 name:                hp
-Version:             0.0
-Synopsis:            My Haskell Playground
-Description:         Me learning haskell by playing around.
-License:             GPL
-License-file:        LICENSE
-Author:              Nathaniel Lim
-Maintainer:          Nathaniel Lim <nathaniel.j.lim@gmail.com>
-Build-Depends:       base
+version:             0.0
+synopsis:            My Haskell Playground
+description:         Me learning haskell by playing around.
+homepage:            https://github.com/nlim/haskell-playground
+license:             MIT
+license-file:        LICENSE
+author:              Nathaniel Lim
+maintainer:          nathaniel.j.lim@gmail.com
+category:            Demo
+build-type:          Simple
+cabal-version:       >=1.8
 
-Executable:          block
-Main-is:             Block.hs
+source-repository head
+  type: git
+  location: git@github.com:nlim/haskell-playground.git
+
+-- configuration for building a library
+library
+  hs-source-dirs: src
+
+  exposed-modules:
+    Playground.Util
+
+  build-depends:
+    base  >= 4 && < 5,
+
+-- configuration for an executable 
+executable githubCommitPrinter
+  hs-source-dirs: main
+  main-is: Main.hs
+  build-depends: base < 5, haskell-starter
+
+-- configuration for Unit tests and properties
+test-suite unit-tests-and-properties
+  type:           exitcode-stdio-1.0
+  main-is:        Main.hs
+  hs-source-dirs: . test
+  build-depends:
+    base,
+    HUnit,
+    QuickCheck                 >= 2.4,
+    test-framework             >= 0.6,
+    test-framework-hunit,
+    test-framework-quickcheck2 >= 0.2,
+    test-framework-th          >= 0.2
+
