@@ -28,7 +28,7 @@ evenFibsSum :: Int -> Int
 evenFibsSum limit = go limit 1 1 0
                     where
                     go :: Int -> Int -> Int -> Int -> Int
-                    go (!l) (!f) (!s) (!sum)
+                    go !l !f !s !sum
                       | (f > l) = sum
                       | ((mod f 2) == 0) = go l (f + s) f (sum+f)
                       | otherwise        = go l (f + s) f sum

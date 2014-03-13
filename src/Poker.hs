@@ -1,3 +1,7 @@
+module Poker (Rank, Suit, Hand, HandType, parseHand, getHandType) where
+
+
+
 import Data.List.Split
 import Control.Monad
 import qualified Data.Map as Map
@@ -229,9 +233,4 @@ getHandType h = case (flush, straight, quads, trips, pairs, singles) of
 
 
 
---- Main
-main :: IO ()
-main = forever $ do
-  putStrLn "Input Hand: e.g. C1 C2 H3 C4 D5"
-  line <- getLine
-  putStrLn (show (fmap getHandType (parseHand line)))
+

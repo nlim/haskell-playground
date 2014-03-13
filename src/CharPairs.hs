@@ -1,18 +1,10 @@
+module CharPairs(FreqData, emptyFreqData, calcFreqStats, accumFreqFromLine, pairsFromLine) where
+
 import Data.Char (toLower)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 import Data.List (foldl', sortBy)
 import System.IO
-
-main :: IO ()
-main = untilEOF (putStrLn . freqMessage) accumFreqFromLine emptyFreqData
-
-untilEOF :: (a -> IO ()) -> (a -> String -> a) -> a -> IO ()
-untilEOF iof r a = do iseof <- isEOF
-                      if iseof
-                      then iof a
-                      else do inputStr <- getLine
-                              untilEOF iof r (r a inputStr)
 
 type CharPair = (Char, Char)
 
@@ -29,10 +21,7 @@ data FreqData = FreqData {
 emptyFreqData :: FreqData
 emptyFreqData = FreqData Map.empty Map.empty 0
 
-freqMessage :: FreqData -> String
-freqMessage = show . calcFreqStats
-
-calcFreqStats :: FreqData -> ([(CharPair, Float)], (Float))
+calcFreqStats :: FreqData -> ([(CharPair, Float)], Float)
 calcFreqStats fd = (topPairs, percentage numTopPairs)
   where
     limit :: Int

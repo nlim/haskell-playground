@@ -1,5 +1,6 @@
+module Block (numWays) where
+
 import qualified Data.IntMap as M
-import System.Environment
 import Control.Parallel.Strategies (Strategy, parBuffer,rdeepseq, withStrategy)
 import Data.Set (Set)
 import Data.List (foldl')
@@ -102,21 +103,4 @@ numWays width height = (sum . M.elems) (wayMap 1 (M.fromList [ (i,1) | i <- labe
                          validAdjMap = getValidAdjMap labelMap
                          labels = M.keys labelMap
                          labelMap = getLabelMap (allPermutations width)
-
-parseInt :: String -> Int
-parseInt = read
-
--- Run this
-main :: IO ()
-main = do
-  [ws,hs] <- getArgs
-  print (numWays (parseInt ws) (parseInt hs))
-
-
--- $   time ./Block 48 10 +RTS -N8
--- 806844323190414
---
--- real  0m2.246s
--- user  0m16.343s
--- sys 0m0.933s
 

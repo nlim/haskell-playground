@@ -20,16 +20,42 @@ library
   hs-source-dirs: src
 
   exposed-modules:
-    Playground.Util
+    Block
+    Poker
+    CharPairs
+    Util
+
+  extensions: BangPatterns
 
   build-depends:
     base  >= 4 && < 5,
+    containers,
+    parallel,
+    split
 
--- configuration for an executable 
-executable githubCommitPrinter
+
+executable blockProgramHaskell
   hs-source-dirs: main
-  main-is: Main.hs
-  build-depends: base < 5, haskell-starter
+  main-is: BlockMain.hs
+  build-depends: base < 5, hp
+  ghc-options:
+    -O2
+    -threaded
+    "-with-rtsopts=-N8"
+
+executable pokerHand
+  hs-source-dirs: main
+  main-is: PokerMain.hs
+  build-depends: base < 5, hp
+
+executable charPairsProgram
+  hs-source-dirs: main
+  main-is: CharPairsMain.hs
+  build-depends: base < 5, hp
+
+
+
+
 
 -- configuration for Unit tests and properties
 test-suite unit-tests-and-properties
