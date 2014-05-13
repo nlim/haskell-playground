@@ -8,6 +8,10 @@ next d = if d == maxBound then minBound else succ d
 back :: (Eq a, Enum a, Bounded a) => a -> a
 back d = if d == minBound then maxBound else pred d
 
+applyN:: Int -> (a -> a) -> (a -> a)
+applyN n _ | n < 1 = id
+applyN n f = (applyN (n-1) f) . f
+
 newtype DayOfMonth = DayOfMonth { intValue :: Int } deriving (Show)
 
 newtype Year = Year { unYear :: Int } deriving (Show, Ord, Eq)

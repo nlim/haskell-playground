@@ -1,4 +1,13 @@
-module Poker (Rank, Suit, Hand, HandType, parseHand, getHandType) where
+module Poker (
+  Rank(..),
+  Suit(..),
+  Hand(..),
+  Card(..),
+  HandType,
+  parseHand,
+  getHandType,
+  makeCard
+) where
 
 
 

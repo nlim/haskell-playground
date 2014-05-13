@@ -24,6 +24,7 @@ library
     Poker
     CharPairs
     Util
+    FreeStuff
 
   extensions: BangPatterns
 
@@ -31,7 +32,9 @@ library
     base  >= 4 && < 5,
     containers,
     parallel,
-    split
+    split,
+    free,
+    mtl
 
 
 executable blockProgramHaskell
@@ -48,13 +51,16 @@ executable pokerHand
   main-is: PokerMain.hs
   build-depends: base < 5, hp
 
+executable freeProgram
+  hs-source-dirs: main
+  main-is: FreeMain.hs
+  build-depends: base < 5, hp
+
+
 executable charPairsProgram
   hs-source-dirs: main
   main-is: CharPairsMain.hs
   build-depends: base < 5, hp
-
-
-
 
 
 -- configuration for Unit tests and properties
