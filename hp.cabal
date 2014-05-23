@@ -25,6 +25,7 @@ library
     CharPairs
     Util
     FreeStuff
+    Euler89
 
   extensions: BangPatterns
 
@@ -54,6 +55,11 @@ executable pokerHand
 executable freeProgram
   hs-source-dirs: main
   main-is: FreeMain.hs
+  build-depends: base < 5, hp
+
+executable euler89Program
+  hs-source-dirs: main
+  main-is: Euler89Main.hs
   build-depends: base < 5, hp
 
 
