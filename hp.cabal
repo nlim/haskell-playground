@@ -26,6 +26,8 @@ library
     Util
     FreeStuff
     Euler89
+    Euler45
+    Euler31
 
   extensions: BangPatterns
 
