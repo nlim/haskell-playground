@@ -1,18 +1,17 @@
 module Euler31 where
 
-
-import Control.Monad.State
-import qualified Data.Map as M (empty, Map, insert, lookup)
-
 -- Use a dynamic programming solution to find the number of ways
 -- to assemble an amount from smaller amounts
 -- Threading the DP table through the computation as a State monad
 
+import Control.Monad.State
+import qualified Data.Map as M (empty, Map, insert, lookup)
+
+runWays :: Int -> Int
+runWays n = evalState (ways denoms n) M.empty
+
 denoms :: [Int]
 denoms = [1, 2, 5, 10, 20, 50, 100, 200]
-
-runWays :: [Int] -> Int -> Int
-runWays ds n = evalState (ways ds n) M.empty
 
 ways :: [Int] -> Int -> (State (M.Map (Int, [Int]) Int) Int)
 ways _  0 = return 1

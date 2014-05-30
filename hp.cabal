@@ -28,6 +28,7 @@ library
     Euler89
     Euler45
     Euler31
+    Euler15
 
   extensions: BangPatterns
 
