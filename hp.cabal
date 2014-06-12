@@ -29,6 +29,7 @@ library
     Euler45
     Euler31
     Euler15
+    AesonFun
 
   extensions: BangPatterns
 
@@ -38,7 +39,11 @@ library
     parallel,
     split,
     free,
-    mtl
+    mtl,
+    aeson,
+    bytestring,
+    text,
+    unordered-containers
 
 
 executable blockProgramHaskell
@@ -76,7 +81,7 @@ executable charPairsProgram
 test-suite unit-tests-and-properties
   type:           exitcode-stdio-1.0
   main-is:        Main.hs
-  hs-source-dirs: . test
+  hs-source-dirs: test
   build-depends:
     base,
     HUnit,
