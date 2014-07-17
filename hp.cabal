@@ -30,8 +30,11 @@ library
     Euler31
     Euler15
     AesonFun
+    AesonFun2
+    Weird
+    AlaCarte
 
-  extensions: BangPatterns
+  extensions: BangPatterns, DeriveGeneric, GADTs, ExistentialQuantification, MultiParamTypeClasses, RankNTypes, DatatypeContexts 
 
   build-depends:
     base  >= 4 && < 5,
@@ -43,8 +46,11 @@ library
     aeson,
     bytestring,
     text,
-    unordered-containers
-
+    unordered-containers,
+    foldl,
+    network,
+    pipes,
+    conduit
 
 executable blockProgramHaskell
   hs-source-dirs: main

@@ -1,6 +1,7 @@
 module Weird where
 
 import Data.List (sortBy, foldl')
+import Control.Monad.State
 
 head' :: [a] -> Maybe a
 head' [] = Nothing
@@ -30,4 +31,18 @@ mapToStr = map toStr
 
 weirdF :: Stuff -> Stuff -> Stuff
 weirdF a b = if a == b then Foo else Baz
+
+
+data Amount s v = Amount s v
+
+emitThreshold :: (Ord s, Integral v) => v -> v -> [Amount s v] -> [(s, v)]
+emitThreshold starting threshold amounts = concat $ evalState (mapM emitThreshold' amounts) $ starting where
+  emitThreshold' (Amount s v) = do
+    modify $ (+v)
+    balance <- get
+    case (balance `div` threshold) of
+      n | n > (fromInteger 0) -> (modify $ \b -> b - thresholds) >> return [(s, thresholds)] where
+        thresholds = n * threshold
+      otherwise               -> return []
+
 
