@@ -19,6 +19,10 @@ source-repository head
 library
   hs-source-dirs: src
 
+  ghc-options:
+    -Wall
+    -O2
+
   exposed-modules:
     Block
     Poker
@@ -32,9 +36,11 @@ library
     AesonFun
     AesonFun2
     Weird
-    AlaCarte
+    AlaCarte,
+    Groundhogging,
+    MyFunctor,
+    Occupation
 
-  extensions: BangPatterns, DeriveGeneric, GADTs, ExistentialQuantification, MultiParamTypeClasses, RankNTypes, DatatypeContexts 
 
   build-depends:
     base  >= 4 && < 5,
@@ -50,7 +56,14 @@ library
     foldl,
     network,
     pipes,
-    conduit
+    conduit,
+    conduit-extra,
+    groundhog-sqlite,
+    groundhog-th,
+    groundhog,
+    transformers,
+    statistics-linreg,
+    vector
 
 executable blockProgramHaskell
   hs-source-dirs: main
@@ -76,10 +89,14 @@ executable euler89Program
   main-is: Euler89Main.hs
   build-depends: base < 5, hp
 
-
 executable charPairsProgram
   hs-source-dirs: main
   main-is: CharPairsMain.hs
+  build-depends: base < 5, hp
+
+executable groundhogProgram
+  hs-source-dirs: main
+  main-is: GroundhogMain.hs
   build-depends: base < 5, hp
 
 

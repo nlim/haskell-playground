@@ -71,6 +71,7 @@ basis = Date { dayOfWeek = Monday, dayOfMonth = DayOfMonth 1, year = Year 1900, 
 foreverDates :: [Date]
 foreverDates = iterate nextDate basis
 
+numSundays :: Int
 numSundays = length $ takeWhile ((< Year 2001) . year) $ filter ((== Sunday) . dayOfWeek) foreverDates
 
 

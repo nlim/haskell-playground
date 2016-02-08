@@ -1,6 +1,5 @@
 import Data.Conduit
 import qualified Data.Conduit.List as CL
-import Control.Monad.IO.Class
 import Control.Monad.State
 
 --- Learning some Conduits
@@ -67,7 +66,10 @@ emitSlidingWindow = do mi <- await
                                       emitSlidingWindow
                          _ -> return ()
 
+slidingWindowPipeline :: State [Int] [[Int]]
 slidingWindowPipeline = CL.sourceList [1..10] $$ emitSlidingWindow =$ CL.consume
+
+statePipeline :: State Int [(Int, Int)]
 statePipeline = CL.sourceList [1..10] $$ emitValuesAndTotals =$ CL.consume
 
 main :: IO ()

@@ -1,3 +1,5 @@
+{-# LANGUAGE ExistentialQuantification, GADTs, RankNTypes #-}
+
 module AlaCarte where
 
 --- Haskell encoding of Runars talk on Monad Coproducts and Free Monads
@@ -16,6 +18,19 @@ data Auth a where
 type Coproduct f g a = Either (f a) (g a)
 
 data Free f a = Return a | forall i. Bind (f i) (i -> Free f a)
+
+instance Functor (Free f) where
+  --fmap :: (a -> b) -> f a -> f b
+  fmap g (Return a)  = Return (g a)
+  fmap g (Bind fi h) = Bind fi (\i -> fmap g (h i))
+
+instance Applicative (Free f) where
+  pure = Return
+  (Return fab) <*> (Return fa)  = Return (fab fa)
+  (Return fab) <*> (Bind fi g)  = Bind fi (\i -> fmap fab (g i))
+  --(Bind fi g)  <*> (Return fa)  = Bind fi (\f -> Return (f fa))
+  --(Bind fi g)  <*> (Bind fj h)  = error "Undefined"
+
 
 instance Monad (Free f) where
   return            = Return

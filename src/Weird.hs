@@ -43,6 +43,6 @@ emitThreshold starting threshold amounts = concat $ evalState (mapM emitThreshol
     case (balance `div` threshold) of
       n | n > (fromInteger 0) -> (modify $ \b -> b - thresholds) >> return [(s, thresholds)] where
         thresholds = n * threshold
-      otherwise               -> return []
+      _                       -> return []
 
 

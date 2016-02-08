@@ -15,8 +15,7 @@ denoms = [1, 2, 5, 10, 20, 50, 100, 200]
 
 ways :: [Int] -> Int -> (State (M.Map (Int, [Int]) Int) Int)
 ways _  0 = return 1
-ways _  n | n < 0 = return 0
-ways [] n | n > 0 = return 0
+ways [] _ = return 0
 ways (d:ds) n = do
   r1 <- lookupOrCompute n ds
   r2 <- lookupOrCompute (n-d) (d:ds)
@@ -25,9 +24,4 @@ ways (d:ds) n = do
   return v
 
 lookupOrCompute :: Int -> [Int] -> (State (M.Map (Int, [Int]) Int) Int)
-lookupOrCompute n ds = do
-  m <- get
-  case (M.lookup (n,ds) m) of
-    Just v  -> return v
-    Nothing -> ways ds n
-
+lookupOrCompute n ds = get >>= maybe (ways ds n) return . M.lookup (n,ds)

@@ -2,8 +2,8 @@ module FreeStuff where
 
 
 import Control.Monad.Free
-import System.Exit hiding (ExitSuccess)
 import Control.Monad.State
+import System.Exit (exitSuccess)
 
 
 data TeletypeF x = PutStrLn String x
@@ -13,6 +13,7 @@ data TeletypeF x = PutStrLn String x
 instance Functor TeletypeF where
   fmap f (PutStrLn str x) = PutStrLn str (f x)
   fmap f (GetLine      k) = GetLine (f . k)
+  fmap _ (ExitSuccess)    = ExitSuccess
 
 type Teletype = Free TeletypeF
 
@@ -29,6 +30,7 @@ run :: Teletype r -> IO r
 run (Pure r) = return r
 run (Free (PutStrLn str t)) = putStrLn str >>  run t
 run (Free (GetLine  f    )) = getLine      >>= run . f
+run (Free (ExitSuccess))    = exitSuccess
 
 data Buffers i o = Buffers { input :: [i], output :: [o] } deriving (Show)
 
@@ -55,8 +57,10 @@ runB :: Teletype r -> StringConsole r
 runB (Pure r) = return r
 runB (Free (PutStrLn str t)) = printB str >> runB t
 runB (Free (GetLine f)) = getB >>= runB . f
+runB (Free ExitSuccess) = error "ExitSuccess"
 
 
+echoB :: ((), Buffers String String)
 echoB = runState (runB echo) (Buffers ["Do you hear me?"] [])
 
 echo :: Teletype ()

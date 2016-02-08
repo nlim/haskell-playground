@@ -3,19 +3,25 @@ module Euler45 where
 import qualified Data.Map as M (empty, Map, insert, lookup, foldlWithKey')
 import qualified Data.List as L (foldl')
 
+triangleNumber  :: Integral a => a -> a
 triangleNumber n = div (n * (n + 1)) 2
 
+pentagonalNumber :: Integral a => a -> a
 pentagonalNumber n = div (n * (3 * n - 1)) 2
 
+hexagonalNumber :: Integral a => a -> a
 hexagonalNumber n = n * (2 * n - 1)
 
+numbersWithIndicies ::  Integral b => b -> [(b, b)]
 numbersWithIndicies limit = concatMap mkSeq [triangleNumber, pentagonalNumber, hexagonalNumber] where
   mkSeq f = takeWhile ((< limit) . snd) [ (n, f n) | n <- [1..]]
 
 data Histo = Histo { numberToIndices :: M.Map Int [Int] } deriving Show
 
+emptyHisto :: Histo
 emptyHisto = Histo M.empty
 
+insertH :: Histo -> (Int, Int) -> Histo
 insertH (Histo ni) (i, v) = Histo ni' where
   ni' = case (M.lookup v ni) of
           Just is -> M.insert v (i:is) ni

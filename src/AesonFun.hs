@@ -1,6 +1,6 @@
 module AesonFun(collapse) where
 
-import qualified Data.Map as M (empty, Map, insert, lookup)
+import qualified Data.Map as M (empty, Map, insert)
 import qualified Data.HashMap.Strict as HM (toList)
 import qualified Data.List as L (foldl')
 import qualified Data.Aeson as Ae (decode, )
@@ -16,10 +16,12 @@ toValue = Ae.decode . BS.pack
 
 type StringMap = M.Map String String
 
+delim :: String
 delim = "/"
 
 type Collapser = StringMap -> Value -> StringMap
 
+collapser0 :: Collapser
 collapser0 = collapser Nothing
 
 collapser :: (Maybe String) -> Collapser
@@ -31,5 +33,5 @@ collapser s m v = case v of
                       toPair (t, v') = (collapser s', v') where
                         s' = Just $ (maybe "" (\p -> p ++ delim) s) ++ (T.unpack t)
                     AT.String t  -> maybe m (\str -> M.insert str (T.unpack t) m) s
-                    otherwise    -> m
+                    _ -> m
 

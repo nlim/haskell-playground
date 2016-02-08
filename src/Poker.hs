@@ -12,7 +12,6 @@ module Poker (
 
 
 import Data.List.Split
-import Control.Monad
 import qualified Data.Map as Map
 import qualified Data.List as List
 
@@ -35,18 +34,24 @@ data Try a = Failure String | Success a deriving (Show)
 
 instance Functor Try where
   fmap f (Success a) = Success (f a)
-  fmap f (Failure s) = Failure s
+  fmap _ (Failure s) = Failure s
+
+instance Applicative Try where
+  pure = Success
+  (<*>) (Success fab) (Success a) = Success $ fab a
+  (<*>) (Success _) (Failure s) = Failure s
+  (<*>) (Failure s) _ = Failure s
 
 instance Monad Try where
   (Success a) >>= f = f a
-  (Failure s) >>= f = Failure s
+  (Failure s) >>= _ = Failure s
   return a = Success a;
 
 instance Eq Card where
-  (==) (Card s1 r1) (Card s2 r2) = (==) r1 r2
+  (==) (Card _ r1) (Card _ r2) = (==) r1 r2
 
 instance Ord Card where
-  compare (Card s1 r1) (Card s2 r2) = compare r1 r2
+  compare (Card _ r1) (Card _ r2) = compare r1 r2
 
 instance Ord Rank where
   compare r1 r2 = compare (value r1) (value r2)
@@ -54,8 +59,8 @@ instance Ord Rank where
 
 instance Eq HandType where
   (StraightFlush r1) == (StraightFlush r2) = (==) r1 r2
-  (Quads r1 (rh1:[])) ==  (Quads r2 (rh2:[])) = (==) r1 r2
-  (FullHouse r11 r12) == (FullHouse r21 r22) = ((==) r11 r21) && ((==) r21 r22)
+  (Quads r1 (_:[])) ==  (Quads r2 (_:[])) = (==) r1 r2
+  (FullHouse r11 _) == (FullHouse r21 r22) = ((==) r11 r21) && ((==) r21 r22)
   (Flush rs1) == (Flush rs2) = rs1 == rs2
   (Straight r1) == (Straight r2) = r1 == r2
   (Trips r1 rs1) == (Trips r2 rs2) = (r1 == r2) && (rs1 == rs2)
@@ -72,7 +77,7 @@ instance Ord HandType where
   compare (Flush rs1) (Flush rs2) = (compare rs1 rs2)
   compare (Straight r1)  (Straight r2) = (compare r1 r2)
   compare (Trips r1 rs1) (Trips r2 rs2) = (compare r1 r2) `ifEqThen` (compare rs1 rs2)
-  compare (TwoPair p11 p12 rs1) (TwoPair p21 p22 rs2) =  (compare p11 p21) `ifEqThen` (compare p12 p22) `ifEqThen` (compare rs1 rs2)
+  compare (TwoPair p11 p12 rs1) (TwoPair p21 p22 rs2) = (compare p11 p21) `ifEqThen` (compare p12 p22) `ifEqThen` (compare rs1 rs2)
   compare (Pair p1 rs1) (Pair p2 rs2) = (compare p1 p2) `ifEqThen` (compare rs1 rs2)
   compare (NoPair rs1) (NoPair rs2) = compare rs1 rs2
   compare h1 h2 = compare (value h1) (value h2)
@@ -182,7 +187,7 @@ suitList h = map (\c -> case c of Card s _ -> s) (cardList h)
 
 incrementHistogram :: (Ord a) => a -> (Map.Map a Int) -> (Map.Map a Int)
 incrementHistogram k m = Map.insert k (v+1) m
-			 where v = maybe 0 id (Map.lookup k m)
+  where v = maybe 0 id (Map.lookup k m)
 
 populateHistogram :: (Ord a) => [a] -> (Map.Map a Int)
 populateHistogram list = foldr incrementHistogram Map.empty list

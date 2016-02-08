@@ -1,6 +1,6 @@
 module Euler89 (Numeral (..), minimalNumerals, parseNumerals, numeralValue) where
 
-import qualified Data.Map as M (Map, fromList, lookup, elems)
+--import qualified Data.Map as M (Map, fromList, lookup, elems)
 import qualified Data.List as L (sortBy)
 
 data Numeral = I | V | X | L | C | D | M deriving (Show)
@@ -14,11 +14,13 @@ valueOfPiece (Subtractive s b) = (numeralValue b) - (numeralValue s)
 allowedSubtractives :: [(Numeral, Numeral)]
 allowedSubtractives  = [(I, V), (I, X), (X, L), (X, C), (C, D), (C, M)]
 
+allowedNumerals :: [Numeral]
 allowedNumerals = [I, V, X, L, C, D, M]
 
 allowedPieces :: [Piece]
 allowedPieces = (map (\t -> Subtractive (fst t) (snd t)) allowedSubtractives) ++ (map Single allowedNumerals)
 
+allowedPiecesSorted :: [Piece]
 allowedPiecesSorted = L.sortBy (\p1 p2 -> compare (valueOfPiece p2) (valueOfPiece p1)) allowedPieces
 
 unPiece :: Piece -> [Numeral]
@@ -32,6 +34,7 @@ minimalPieces:: Int -> [Piece]
 minimalPieces n | n <= 0 = []
                 | otherwise = reverse $ go n allowedPiecesSorted []
                   where go 0 _ accum = accum
+                        go _ [] accum = accum
                         go m (p:ps) accum = let v = valueOfPiece p in
                                               case (v `compare` m) of
                                                 LT -> go (m - v) (p:ps) (p:accum)
@@ -39,9 +42,6 @@ minimalPieces n | n <= 0 = []
                                                 GT -> go m ps accum
 
 
-
-allowedPiecesMap :: M.Map Int Piece
-allowedPiecesMap = M.fromList $ map (\p -> (valueOfPiece p, p)) allowedPieces
 
 parseNumerals :: String -> Maybe [Numeral]
 parseNumerals = mapM charMapping

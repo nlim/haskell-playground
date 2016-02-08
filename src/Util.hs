@@ -1,8 +1,8 @@
+{-# LANGUAGE BangPatterns #-}
+
 module Util (foldLines, transformLines) where
 
 import System.IO
-
-{-# LANGUAGE BangPatterns #-}
 
 transformLines :: (String -> String) -> (IO ())
 transformLines f = do iseof <- isEOF

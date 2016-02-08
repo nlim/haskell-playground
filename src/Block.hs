@@ -1,7 +1,7 @@
 module Block (numWays) where
 
 import qualified Data.IntMap as M
-import Control.Parallel.Strategies (Strategy, parBuffer,rdeepseq, withStrategy)
+import Control.Parallel.Strategies (parBuffer,rdeepseq, withStrategy)
 import Data.Set (Set)
 import Data.List (foldl')
 import qualified Data.Set as Set

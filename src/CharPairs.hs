@@ -1,10 +1,9 @@
-module CharPairs(FreqData, emptyFreqData, calcFreqStats, accumFreqFromLine, pairsFromLine) where
+module CharPairs (FreqData, emptyFreqData, calcFreqStats, accumFreqFromLine, pairsFromLine) where
 
 import Data.Char (toLower)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
-import Data.List (foldl', sortBy)
-import System.IO
+import Data.List (foldl')
 
 type CharPair = (Char, Char)
 
@@ -34,7 +33,7 @@ calcFreqStats fd = (topPairs, percentage numTopPairs)
     allTopPairs :: [(CharPair, Float)]
     allTopPairs = [ (cp, percentage i) | i <- topCounts, cp <- (Set.toList ((inverseHisto fd) Map.! i))]
     topPairs = take limit allTopPairs
-    numTopPairs = foldl' (\sum cp -> sum + ((histo fd) Map.! cp)) 0 ((map fst) topPairs)
+    numTopPairs = foldl' (\accum cp -> accum + ((histo fd) Map.! cp)) 0 ((map fst) topPairs)
 
 
 accumFreqFromLine :: FreqData -> String -> FreqData
@@ -58,8 +57,8 @@ loadCharPair (FreqData ih h s) cp = FreqData ih' h' (s+1)
     ih' = (addCp . removeCp) ih
             where
               removeCp ih'' = maybe ih''
-                                    (\s -> Map.insert c (Set.delete cp s) ih'')
+                                    (\s' -> Map.insert c (Set.delete cp s') ih'')
                                     (Map.lookup c ih'')
               addCp ih''    = maybe (Map.insert c' (Set.fromList [cp]) ih'')
-                                    (\s -> Map.insert c' (Set.insert cp s) ih'')
+                                    (\s' -> Map.insert c' (Set.insert cp s') ih'')
                                     (Map.lookup c' ih'')
